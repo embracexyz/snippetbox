@@ -2,6 +2,7 @@ package models
 
 import (
 	"database/sql"
+	"errors"
 	"time"
 )
 
@@ -34,9 +35,89 @@ func (m *SnippetModel) Insert(title string, content string, expires int) (int, e
 }
 
 func (m *SnippetModel) Get(id int) (*Snippet, error) {
-	return nil, nil
+	stmt := `select id, title, content, created, expires from snippets where id = ? and expires > utc_timestamp()`
+	snippet := &Snippet{}
+
+	err := m.DB.QueryRow(stmt, id).Scan(&snippet.ID, &snippet.Title, &snippet.Content, &snippet.Created, &snippet.Expires)
+
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, ErrNoRecord
+		} else {
+			return nil, err
+		}
+	}
+	return snippet, nil
 }
 
 func (m *SnippetModel) Latest() ([]*Snippet, error) {
-	return nil, nil
+	// multi record sql query
+	stmt := `select id, title, content, created, expires from snippets where expires > utc_timestamp() order by id desc limit 10`
+
+	rows, err := m.DB.Query(stmt)
+	if err != nil {
+		return nil, err
+	}
+
+	defer rows.Close()
+
+	s := []*Snippet{}
+	for rows.Next() {
+		snippet := &Snippet{}
+		err := rows.Scan(&snippet.ID, &snippet.Title, &snippet.Content, &snippet.Created, &snippet.Expires)
+		if err != nil {
+			return nil, err
+		}
+		s = append(s, snippet)
+	}
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+	return s, nil
+}
+
+func (m *SnippetModel) ExampleTransaction() error {
+	tx, err := m.DB.Begin()
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+
+	_, err = tx.Exec("insert into ..")
+	if err != nil {
+		return err
+	}
+
+	_, err = tx.Exec("update ...")
+	if err != nil {
+		return err
+	}
+	if err = tx.Commit(); err != nil {
+		return err
+	}
+	return nil
+}
+
+// example Pre statement
+type PreStmtModel struct {
+	DB         *sql.DB
+	InsertStmt *sql.Stmt
+}
+
+func NewPreStmtModel(db *sql.DB) (*PreStmtModel, error) {
+	insertStmt, err := db.Prepare("insert into ...")
+	if err != nil {
+		return nil, err
+	}
+
+	return &PreStmtModel{
+		DB:         db,
+		InsertStmt: insertStmt,
+	}, nil
+
+}
+
+func (m *PreStmtModel) insert(args ...interface{}) error {
+	_, err := m.InsertStmt.Exec(args...)
+	return err
 }

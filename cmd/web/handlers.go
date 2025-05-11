@@ -1,10 +1,12 @@
 package main
 
 import (
+	"errors"
 	"fmt"
-	"html/template"
 	"net/http"
 	"strconv"
+
+	"github.com/embracexyz/snippetbox/internal/models"
 )
 
 func (app *appliction) download(w http.ResponseWriter, r *http.Request) {
@@ -18,23 +20,15 @@ func (app *appliction) home(w http.ResponseWriter, r *http.Request) {
 		return // 这里不return，会继续执行后续code
 	}
 
-	files := []string{
-		"./ui/html/pages/base.tmpl",
-		"./ui/html/partials/nav.tmpl",
-		"./ui/html/pages/home.tmpl",
-	}
-
-	// 文件路径为绝对路径，或者相对路径（当前执行go run 的路径）
-	ts, err := template.ParseFiles(files...)
+	snippets, err := app.snippets.Latest()
 	if err != nil {
 		app.serverError(w, err)
 		return
 	}
-	err = ts.ExecuteTemplate(w, "base", nil)
-	if err != nil {
-		app.serverError(w, err)
-	}
 
+	data := NewTemplateData(r)
+	data.Snippets = snippets
+	app.render(w, http.StatusOK, "home.tmpl", data)
 }
 
 func (app *appliction) snippetView(w http.ResponseWriter, r *http.Request) {
@@ -44,7 +38,20 @@ func (app *appliction) snippetView(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.Write([]byte("display a snippet"))
+	snippet, err := app.snippets.Get(id)
+	if err != nil {
+		if errors.Is(err, models.ErrNoRecord) {
+			app.notFound(w)
+		} else {
+			app.serverError(w, err)
+		}
+		return
+	}
+
+	data := NewTemplateData(r)
+	data.Snippet = snippet
+	app.render(w, http.StatusOK, "view.tmpl", data)
+
 }
 
 func (app *appliction) snippetCreate(w http.ResponseWriter, r *http.Request) {
