@@ -72,3 +72,19 @@ func (app *appliction) snippetCreate(w http.ResponseWriter, r *http.Request) {
 
 	http.Redirect(w, r, fmt.Sprintf("/snippet/view?id=%d", id), http.StatusSeeOther)
 }
+
+// 捕捉panic的中间件只能补充同一个goroutine的panice，如果某handler启动了一个新的goroutine，且在其中panic了，那么中间件就无法handle，因此：需要在call 另一个goroutine之前，自己注册一个recover的defer
+func (app *appliction) spinNewGoroutineHandler(w http.ResponseWriter, r *http.Request) {
+
+	go func() {
+		defer func() {
+			if err := recover(); err != nil {
+				app.infoLog.Println("recover in sub goroutine")
+			}
+		}()
+
+		// do some background stuff which may be panic
+	}()
+
+	w.Write([]byte("ok~"))
+}

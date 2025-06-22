@@ -2,7 +2,7 @@ package main
 
 import "net/http"
 
-func (app *appliction) getRoutes() *http.ServeMux {
+func (app *appliction) getRoutes() http.Handler {
 	mux := http.NewServeMux()
 
 	fileServer := http.FileServer(http.Dir("./ui/static"))
@@ -22,5 +22,5 @@ func (app *appliction) getRoutes() *http.ServeMux {
 
 	// 这里mux本身也是满足了ServeHttp接口，这里只是入口路由功能，通过注册的url，分配到不同Handler接口去处理，最后汇总结果并返回
 	// 每个handler是并发处理的，单独的goroutine中，因此要注意race condition
-	return mux
+	return app.recoverPanic(app.logRequest(secureHeaders(mux)))
 }
