@@ -6,7 +6,7 @@ func (app *appliction) getRoutes() *http.ServeMux {
 	mux := http.NewServeMux()
 
 	fileServer := http.FileServer(http.Dir("./ui/static"))
-	mux.Handle("/static", http.StripPrefix("/static", fileServer))
+	mux.Handle("/static/", http.StripPrefix("/static", fileServer))
 
 	// 原本应该是Handle方法，注册一个http.Handler接口类型（实现了ServeHttp方法）；但是HandleFunc却能直接注册一个函数；
 	// 背后，是因为HandleFunc是包装，本质是调用HandleFunc(f)；对f做了强制类型转换；而该类型实现了ServeHttp方法，通过直接call f函数实现，而该函数签名整好是满足ServeHttp签名
