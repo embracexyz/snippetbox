@@ -20,7 +20,7 @@ func myMiddleware(next http.Handler) http.Handler {
 // 中间件的放置位置
 // servemux 前，所有的请求都会被处理到; 之后，则只有通过servemux路由转发后的特定请求才能会处理到
 
-func secureHeaders(next http.Handler) http.Handler {
+func (app *appliction) secureHeaders(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
 		w.Header().Set("Content-Security-Policy", "default-src 'self'; style-src 'self' fonts.googleapis.com; font-src fonts.gstatic.com")

@@ -7,6 +7,7 @@ import (
 	"strconv"
 
 	"github.com/embracexyz/snippetbox/internal/models"
+	"github.com/julienschmidt/httprouter"
 )
 
 func (app *appliction) download(w http.ResponseWriter, r *http.Request) {
@@ -14,11 +15,6 @@ func (app *appliction) download(w http.ResponseWriter, r *http.Request) {
 }
 
 func (app *appliction) home(w http.ResponseWriter, r *http.Request) {
-	// 实现/精准匹配，而非通配
-	if r.URL.Path != "/" {
-		app.notFound(w)
-		return // 这里不return，会继续执行后续code
-	}
 
 	snippets, err := app.snippets.Latest()
 	if err != nil {
@@ -32,8 +28,9 @@ func (app *appliction) home(w http.ResponseWriter, r *http.Request) {
 }
 
 func (app *appliction) snippetView(w http.ResponseWriter, r *http.Request) {
-	id, err := strconv.Atoi(r.URL.Query().Get("id"))
-	if err != nil || id < 0 {
+	params := httprouter.ParamsFromContext(r.Context())
+	id, err := strconv.Atoi(params.ByName("id"))
+	if err != nil || id < 1 {
 		app.clientError(w, http.StatusBadRequest)
 		return
 	}
@@ -54,12 +51,7 @@ func (app *appliction) snippetView(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func (app *appliction) snippetCreate(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		w.Header().Set("Allow", http.MethodPost)
-		app.clientError(w, http.StatusMethodNotAllowed)
-		return
-	}
+func (app *appliction) snippetCreatePost(w http.ResponseWriter, r *http.Request) {
 	title := "O snail"
 	content := "O snail\nClimb Mount Fuji,\nBut slowly, slowly!\n\n– Kobayashi Issa"
 	expires := 7
@@ -70,7 +62,11 @@ func (app *appliction) snippetCreate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	http.Redirect(w, r, fmt.Sprintf("/snippet/view?id=%d", id), http.StatusSeeOther)
+	http.Redirect(w, r, fmt.Sprintf("/snippet/view/%d", id), http.StatusSeeOther)
+}
+
+func (app *appliction) snippetCreate(w http.ResponseWriter, r *http.Request) {
+	w.Write([]byte("display a form..."))
 }
 
 // 捕捉panic的中间件只能补充同一个goroutine的panice，如果某handler启动了一个新的goroutine，且在其中panic了，那么中间件就无法handle，因此：需要在call 另一个goroutine之前，自己注册一个recover的defer
