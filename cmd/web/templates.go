@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/embracexyz/snippetbox/internal/models"
+	"github.com/embracexyz/snippetbox/internal/validator"
 )
 
 type templateData struct {
@@ -18,10 +19,10 @@ type templateData struct {
 }
 
 type Form struct {
-	Title       string
-	Content     string
-	Expires     int
-	FieldErrors map[string]string
+	Title   string
+	Content string
+	Expires int
+	validator.Validator
 }
 
 func NewTemplateData(r *http.Request) *templateData {

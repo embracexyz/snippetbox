@@ -5,11 +5,11 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
-	"strings"
-	"unicode/utf8"
 
 	"github.com/embracexyz/snippetbox/internal/models"
 	"github.com/julienschmidt/httprouter"
+
+	"github.com/embracexyz/snippetbox/internal/validator"
 )
 
 func (app *appliction) download(w http.ResponseWriter, r *http.Request) {
@@ -74,27 +74,17 @@ func (app *appliction) snippetCreatePost(w http.ResponseWriter, r *http.Request)
 	// validation before insert
 
 	form := Form{
-		Title:       title,
-		Content:     content,
-		Expires:     expires,
-		FieldErrors: map[string]string{},
+		Title:   title,
+		Content: content,
+		Expires: expires,
 	}
 
-	if strings.TrimSpace(title) == "" {
-		form.FieldErrors["title"] = "This field cannot be blank"
-	} else if utf8.RuneCountInString(title) > 10 {
-		form.FieldErrors["title"] = "This field is too long (maximum is 10 characters)"
-	}
-	if strings.TrimSpace(content) == "" {
-		form.FieldErrors["content"] = "This field cannot be blank"
-	} else if utf8.RuneCountInString(content) > 5 {
-		form.FieldErrors["content"] = "This field is too long (maximum is 5 characters)"
-	}
-	if expires != 1 && expires != 7 && expires != 365 {
-		form.FieldErrors["expires"] = "This field must equal 1, 7 or 365"
-	}
+	form.CheckField(validator.NotBlank(form.Title), "title", "This field cannot be blank")
+	form.CheckField(validator.MaxChars(form.Title, 100), "title", "This field cannot be more than 100 characters long")
+	form.CheckField(validator.NotBlank(form.Content), "content", "This field cannot be blank")
+	form.CheckField(validator.PermmittedInt(form.Expires, 1, 7, 365), "expires", "This field must equal 1, 7 or 365")
 
-	if len(form.FieldErrors) > 0 {
+	if !form.Valid() {
 		data := NewTemplateData(r)
 		data.Form = form
 		app.render(w, http.StatusUnprocessableEntity, "create.tmpl", data)
