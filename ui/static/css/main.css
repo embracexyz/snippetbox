@@ -80,6 +80,10 @@ header {
     text-align: center;
 }
 
+header h1 {
+    display: inline-block;
+}
+
 header a {
     color: #34495E;
     text-decoration: none;

@@ -7,7 +7,11 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"time"
 
+	"github.com/alexedwards/scs/mysqlstore"
+	"github.com/alexedwards/scs/v2"
+	"github.com/go-playground/form/v4"
 	_ "github.com/go-sql-driver/mysql"
 
 	"github.com/embracexyz/snippetbox/internal/models"
@@ -18,13 +22,15 @@ type config struct {
 	dsn  string
 }
 
-// 依赖注入;通过把handlerFunc变成appliction的方法，从而使得各类业务函数能access到appliction的属性，即infoLog，实现依赖注入
+// 依赖注入;通过把handlerFunc变成application的方法，从而使得各类业务函数能access到application的属性，即infoLog，实现依赖注入
 // 但！仅限于同package，如果是handler分布在不同packege，只能通过closure方式实现，外部package的handlerFunc接受applaction并返回一个http.HandlerFunc类型，通过closure访问appliciton
-type appliction struct {
-	infoLog       *log.Logger
-	errLog        *log.Logger
-	snippets      *models.SnippetModel
-	templateCache map[string]*template.Template
+type application struct {
+	infoLog        *log.Logger
+	errLog         *log.Logger
+	snippets       *models.SnippetModel
+	templateCache  map[string]*template.Template
+	formDecoder    *form.Decoder
+	sessionManager *scs.SessionManager
 }
 
 func openDB(dsn string) (*sql.DB, error) {
@@ -61,11 +67,21 @@ func main() {
 		errLog.Fatal(err)
 	}
 
-	app := appliction{
-		infoLog:       infoLog,
-		errLog:        errLog,
-		snippets:      &models.SnippetModel{DB: db},
-		templateCache: templateCache,
+	// add formDecoder
+	formDecoder := form.NewDecoder()
+
+	// add sessionManager
+	sessionManager := scs.New()
+	sessionManager.Store = mysqlstore.New(db)
+	sessionManager.Lifetime = 12 * time.Hour
+
+	app := application{
+		infoLog:        infoLog,
+		errLog:         errLog,
+		snippets:       &models.SnippetModel{DB: db},
+		templateCache:  templateCache,
+		formDecoder:    formDecoder,
+		sessionManager: sessionManager,
 	}
 
 	// 使用自定义http.Server，而非默认的

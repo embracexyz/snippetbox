@@ -2,28 +2,31 @@ package main
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"net/http"
 	"runtime/debug"
+
+	"github.com/go-playground/form/v4"
 )
 
-func (app *appliction) serverError(w http.ResponseWriter, err error) {
+func (app *application) serverError(w http.ResponseWriter, err error) {
 	trace := fmt.Sprintf("%s\n%s", err.Error(), debug.Stack())
 	app.errLog.Output(2, trace)
 
 	http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 }
 
-func (app *appliction) clientError(w http.ResponseWriter, status int) {
+func (app *application) clientError(w http.ResponseWriter, status int) {
 	http.Error(w, http.StatusText(status), status)
 }
 
-func (app *appliction) notFound(w http.ResponseWriter) {
+func (app *application) notFound(w http.ResponseWriter) {
 	app.clientError(w, http.StatusNotFound)
 }
 
 // 抽离render template 的通用逻辑
-func (app *appliction) render(w http.ResponseWriter, status int, templateName string, data *templateData) {
+func (app *application) render(w http.ResponseWriter, status int, templateName string, data *templateData) {
 	ts, ok := app.templateCache[templateName]
 	if !ok {
 		err := fmt.Errorf("template %s not found!", templateName)
@@ -42,4 +45,21 @@ func (app *appliction) render(w http.ResponseWriter, status int, templateName st
 
 	w.WriteHeader(status)
 	buf.WriteTo(w)
+}
+
+func (app *application) decoderForm(r *http.Request, dst interface{}) error {
+	err := r.ParseForm()
+	if err != nil {
+		return err
+	}
+
+	err = app.formDecoder.Decode(dst, r.PostForm)
+	if err != nil {
+		var invalidDecodeError *form.InvalidDecoderError
+		if errors.As(err, &invalidDecodeError) {
+			panic(err)
+		}
+		return err
+	}
+	return nil
 }

@@ -16,18 +16,21 @@ type templateData struct {
 	Snippets    []*models.Snippet
 	// add a form 存储提交表单的数据和error校验信息
 	Form interface{}
+	// add Flash
+	Flash string
 }
 
 type Form struct {
-	Title   string
-	Content string
-	Expires int
-	validator.Validator
+	Title               string `form:"title"`
+	Content             string `form:"content"`
+	Expires             int    `form:"expires"`
+	validator.Validator `form:"-"`
 }
 
-func NewTemplateData(r *http.Request) *templateData {
+func (app *application) NewTemplateData(r *http.Request) *templateData {
 	return &templateData{
 		CurrentYear: time.Now().Year(),
+		Flash:       app.sessionManager.PopString(r.Context(), "flash"), // 自动尝试从当前context中取flash信息
 	}
 }
 

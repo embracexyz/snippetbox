@@ -7,7 +7,7 @@ import (
 	"github.com/justinas/alice"
 )
 
-func (app *appliction) getRoutes() http.Handler {
+func (app *application) getRoutes() http.Handler {
 	router := httprouter.New()
 
 	// custom error handler
@@ -31,10 +31,13 @@ func (app *appliction) getRoutes() http.Handler {
 	// // server single file
 	// mux.HandleFunc("/download", app.download)
 
-	router.HandlerFunc(http.MethodGet, "/", app.home) // excatly match "/"
-	router.HandlerFunc(http.MethodGet, "/snippet/view/:id", app.snippetView)
-	router.HandlerFunc(http.MethodGet, "/snippet/create", app.snippetCreate)
-	router.HandlerFunc(http.MethodPost, "/snippet/create", app.snippetCreatePost)
+	// 注册session管理的中间件，在它之后的handler，会被自动处理session数据，
+	dynamic := alice.New(app.sessionManager.LoadAndSave)
+
+	router.Handler(http.MethodGet, "/", dynamic.ThenFunc(app.home)) // excatly match "/"
+	router.Handler(http.MethodGet, "/snippet/view/:id", dynamic.ThenFunc(app.snippetView))
+	router.Handler(http.MethodGet, "/snippet/create", dynamic.ThenFunc(app.snippetCreate))
+	router.Handler(http.MethodPost, "/snippet/create", dynamic.ThenFunc(app.snippetCreatePost))
 
 	// add a middleware chain containing our 'stanard' middleware
 	// which will be used for every request our application receives.
