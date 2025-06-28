@@ -32,6 +32,12 @@ func (app *application) getRoutes() http.Handler {
 	// mux.HandleFunc("/download", app.download)
 
 	// 注册session管理的中间件，在它之后的handler，会被自动处理session数据，
+	// session中间件做了什么？
+	/*
+		1. 检查当前request是否有session，有则在对应store里（这里是mysql，也比如说redis）取出session token（一个token标识一个客户端）
+			所对应的session data(之前请求所添加的一些上下文信息，比如是否登录了，访问了哪些页面)，当然也会检查其是否过期；只有没过期的session data 会被attach到context中；
+			从而被后面的业务handler使用；业务handler处理中更新了session data ，也会被sessionManager保存到store中，再返回给客户端
+	*/
 	dynamic := alice.New(app.sessionManager.LoadAndSave)
 
 	router.Handler(http.MethodGet, "/", dynamic.ThenFunc(app.home)) // excatly match "/"
