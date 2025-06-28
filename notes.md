@@ -13,3 +13,14 @@
 
 # 中间件
 
+# 表单处理
+
+1. 表单url
+2. 如何做表单validation，报错时返回提示并携带之前填入的信息
+
+| method | url               | handler           |
+| ------ | ----------------- | ----------------- |
+| GET    | /snippet/create   | snippetCreate     |
+| POST   | /snippet/create   | snippetCreatePost |
+| GET    | /snippet/view/:id | snippetView       |
+

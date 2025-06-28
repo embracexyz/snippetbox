@@ -13,6 +13,15 @@ type templateData struct {
 	CurrentYear int
 	Snippet     *models.Snippet
 	Snippets    []*models.Snippet
+	// add a form 存储提交表单的数据和error校验信息
+	Form interface{}
+}
+
+type Form struct {
+	Title       string
+	Content     string
+	Expires     int
+	FieldErrors map[string]string
 }
 
 func NewTemplateData(r *http.Request) *templateData {
