@@ -74,6 +74,9 @@ func main() {
 	sessionManager := scs.New()
 	sessionManager.Store = mysqlstore.New(db)
 	sessionManager.Lifetime = 12 * time.Hour
+	sessionManager.Cookie.Secure = true // for https connection
+
+	// init application
 
 	app := application{
 		infoLog:        infoLog,
@@ -89,9 +92,15 @@ func main() {
 		Addr:     config.addr,
 		ErrorLog: errLog,
 		Handler:  app.getRoutes(),
+		// go http server默认启动了keep alive，即多个http请求可以复用一个tcp连接，减少tcp建立释放的开销，但是当tcp idle一定时间server端要主动断开，避免slow client的攻击笑话服务端资源
+		IdleTimeout: time.Minute,
+		// 如果超过5s，请求头或者请求体还没读完，就关闭tcp连接
+		ReadTimeout: 5 * time.Second,
+		// http协议：从开始读request header时开始计时，https协议，从requst被接受开始计时
+		WriteTimeout: 10 * time.Second,
 	}
 
 	infoLog.Printf("Listening on %s", config.addr)
-	err = server.ListenAndServe()
+	err = server.ListenAndServeTLS("./tls/cert.pem", "./tls/key.pem")
 	errLog.Fatal(err)
 }
