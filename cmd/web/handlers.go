@@ -117,3 +117,23 @@ func (app *application) spinNewGoroutineHandler(w http.ResponseWriter, r *http.R
 
 	w.Write([]byte("ok~"))
 }
+
+func (app *application) userSignUp(w http.ResponseWriter, r *http.Request) {
+	fmt.Fprintln(w, "user sign up")
+}
+
+func (app *application) userSignUpPost(w http.ResponseWriter, r *http.Request) {
+	fmt.Fprintln(w, "user sign up post")
+}
+
+func (app *application) userLogin(w http.ResponseWriter, r *http.Request) {
+	fmt.Fprintln(w, "user login")
+}
+
+func (app *application) userLoginPost(w http.ResponseWriter, r *http.Request) {
+	fmt.Fprintln(w, "user login post")
+}
+
+func (app *application) userLogout(w http.ResponseWriter, r *http.Request) {
+	fmt.Fprintln(w, "user logout")
+}
