@@ -1,6 +1,7 @@
 package validator
 
 import (
+	"regexp"
 	"strings"
 	"unicode/utf8"
 )
@@ -10,12 +11,14 @@ import (
 可以供任意调用方使用，提供一个valid() bool 方法，判断一组字段是否满足要求，不满足时则提供一组提示信息
 */
 
+var EmailRX = regexp.MustCompile("^[a-zA-Z0-9.!#$%&'*+\\/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$")
+
 type Validator struct {
 	FieldErrors map[string]string
 }
 
 // 如果false，则记录一组提示信息
-func (v *Validator) addFildError(key, message string) {
+func (v *Validator) AddFildError(key, message string) {
 	if v.FieldErrors == nil {
 		v.FieldErrors = make(map[string]string)
 	}
@@ -25,7 +28,7 @@ func (v *Validator) addFildError(key, message string) {
 }
 func (v *Validator) CheckField(ok bool, key, message string) {
 	if !ok {
-		v.addFildError(key, message)
+		v.AddFildError(key, message)
 	}
 }
 
@@ -49,4 +52,12 @@ func PermmittedInt(value int, permittedValues ...int) bool {
 		}
 	}
 	return false
+}
+
+func MinChars(chars string, n int) bool {
+	return utf8.RuneCountInString(chars) >= n
+}
+
+func Matches(value string, rx *regexp.Regexp) bool {
+	return rx.MatchString(value)
 }
