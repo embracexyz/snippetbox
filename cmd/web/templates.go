@@ -2,12 +2,14 @@ package main
 
 import (
 	"html/template"
+	"io/fs"
 	"net/http"
 	"path/filepath"
 	"time"
 
 	"github.com/embracexyz/snippetbox/internal/models"
 	"github.com/embracexyz/snippetbox/internal/validator"
+	"github.com/embracexyz/snippetbox/ui"
 	"github.com/justinas/nosurf"
 )
 
@@ -43,7 +45,7 @@ func (app *application) NewTemplateData(r *http.Request) *templateData {
 func NewTemplateCache() (map[string]*template.Template, error) {
 	templates := map[string]*template.Template{}
 
-	pages, err := filepath.Glob("./ui/html/pages/*.tmpl")
+	pages, err := fs.Glob(ui.Files, "html/pages/*.tmpl")
 	if err != nil {
 		return nil, err
 	}
@@ -51,20 +53,16 @@ func NewTemplateCache() (map[string]*template.Template, error) {
 	for _, page := range pages {
 		fileName := filepath.Base(page) // 返回文件名, 以文件名做key
 
-		// ts, err := template.ParseFiles("./ui/html/pages/base.tmpl")
-		ts, err := template.New(fileName).Funcs(functions).ParseFiles("./ui/html/pages/base.tmpl")
-		if err != nil {
-			return nil, err
-		}
-		ts, err = ts.ParseGlob("./ui/html/partials/*.tmpl")
-		if err != nil {
-			return nil, err
-		}
-		ts, err = ts.ParseFiles(page)
-		if err != nil {
-			return nil, err
+		patterns := []string{
+			"html/pages/base.tmpl",
+			"html/partials/*.tmpl",
+			page,
 		}
 
+		ts, err := template.New(fileName).Funcs(functions).ParseFS(ui.Files, patterns...)
+		if err != nil {
+			return nil, err
+		}
 		templates[fileName] = ts
 	}
 
