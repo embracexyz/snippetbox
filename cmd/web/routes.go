@@ -42,15 +42,17 @@ func (app *application) getRoutes() http.Handler {
 
 	router.Handler(http.MethodGet, "/", dynamic.ThenFunc(app.home)) // excatly match "/"
 	router.Handler(http.MethodGet, "/snippet/view/:id", dynamic.ThenFunc(app.snippetView))
-	router.Handler(http.MethodGet, "/snippet/create", dynamic.ThenFunc(app.snippetCreate))
-	router.Handler(http.MethodPost, "/snippet/create", dynamic.ThenFunc(app.snippetCreatePost))
-
 	// user
 	router.Handler(http.MethodGet, "/user/signup", dynamic.ThenFunc(app.userSignUp))
 	router.Handler(http.MethodPost, "/user/signup", dynamic.ThenFunc(app.userSignUpPost))
 	router.Handler(http.MethodGet, "/user/login", dynamic.ThenFunc(app.userLogin))
 	router.Handler(http.MethodPost, "/user/login", dynamic.ThenFunc(app.userLoginPost))
-	router.Handler(http.MethodPost, "/user/logout", dynamic.ThenFunc(app.userLogout))
+
+	protected := dynamic.Append(app.requireAuth)
+	// add requireAuth middler before this url
+	router.Handler(http.MethodGet, "/snippet/create", protected.ThenFunc(app.snippetCreate))
+	router.Handler(http.MethodPost, "/snippet/create", protected.ThenFunc(app.snippetCreatePost))
+	router.Handler(http.MethodPost, "/user/logout", protected.ThenFunc(app.userLogout))
 
 	// add a middleware chain containing our 'stanard' middleware
 	// which will be used for every request our application receives.

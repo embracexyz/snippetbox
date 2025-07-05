@@ -32,7 +32,7 @@ func (app *application) NewTemplateData(r *http.Request) *templateData {
 	return &templateData{
 		CurrentYear:     time.Now().Year(),
 		Flash:           app.sessionManager.PopString(r.Context(), "flash"), // 自动尝试从当前context中取flash信息
-		IsAuthenticated: app.isAuthenticated(),
+		IsAuthenticated: app.isAuthenticated(r),
 	}
 }
 
