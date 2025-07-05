@@ -8,6 +8,7 @@ import (
 
 	"github.com/embracexyz/snippetbox/internal/models"
 	"github.com/embracexyz/snippetbox/internal/validator"
+	"github.com/justinas/nosurf"
 )
 
 type templateData struct {
@@ -19,6 +20,7 @@ type templateData struct {
 	// add Flash
 	Flash           string
 	IsAuthenticated bool
+	CSRFToken       string
 }
 
 type Form struct {
@@ -33,6 +35,7 @@ func (app *application) NewTemplateData(r *http.Request) *templateData {
 		CurrentYear:     time.Now().Year(),
 		Flash:           app.sessionManager.PopString(r.Context(), "flash"), // 自动尝试从当前context中取flash信息
 		IsAuthenticated: app.isAuthenticated(r),
+		CSRFToken:       nosurf.Token(r),
 	}
 }
 

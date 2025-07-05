@@ -38,7 +38,7 @@ func (app *application) getRoutes() http.Handler {
 			所对应的session data(之前请求所添加的一些上下文信息，比如是否登录了，访问了哪些页面)，当然也会检查其是否过期；只有没过期的session data 会被attach到context中；
 			从而被后面的业务handler使用；业务handler处理中更新了session data ，也会被sessionManager保存到store中，再返回给客户端
 	*/
-	dynamic := alice.New(app.sessionManager.LoadAndSave)
+	dynamic := alice.New(app.sessionManager.LoadAndSave, noSurf)
 
 	router.Handler(http.MethodGet, "/", dynamic.ThenFunc(app.home)) // excatly match "/"
 	router.Handler(http.MethodGet, "/snippet/view/:id", dynamic.ThenFunc(app.snippetView))
