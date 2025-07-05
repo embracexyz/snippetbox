@@ -48,3 +48,42 @@ func (app *application) isAuthenticated(r *http.Request) bool {
 1. 如上方法，有个缺陷，当session data中取出authenticatedUserID时，该用户已经在数据库删除了，这时是感知不到的
 2. 所以需要通过查数据库实现，但调用方可能有多次，对数据库有压力，那么就需要一次查询，后续handler通过一个标志位判断结果true or false就行了，于是加入一个中间件用于查库，然后将标志信息set 到context，后续handler只需在context查询即可
 3. 该中间件authenticate做的确保用户存于库中，所以还需要先从session data取出authenticatedUserID，拿到id，才能作为查询条件，而没有authenticatedUserID的，说明还没登录，直接放行（后续有requireAuth 中间件拦截，该中间件又依赖authenticate设置在context的标志位，所以是负责2个不同逻辑的中间件：一个是负责设置标志位，一个是根据标志位选择性拦截）
+
+
+
+## 添加kv到context
+
+```bash
+// Where r is a *http.Request...
+ctx := r.Context()
+ctx = context.WithValue(ctx, "isAuthenticated", true)
+r = r.WithContext(ctx)
+
+# 取出现有context
+# 创建现有context的一个copy，添加kv
+# 再创建当前reqeust的一个copy，里面context指向新的context
+
+也就是说老的context和request都不被引用，等着被回收咯？
+
+```
+
+## 避免context key冲突 & 断言后使用（因为是any类型）
+
+**使用自定义类型，避免key冲突**
+
+```bash
+// Declare a custom "contextKey" type for your context keys.
+type contextKey string
+// Create a constant with the type contextKey that we can use.
+const isAuthenticatedContextKey = contextKey("isAuthenticated")
+...
+// Set the value in the request context, using our isAuthenticatedContextKey // constant as the key.
+ctx := r.Context()
+ctx = context.WithValue(ctx, isAuthenticatedContextKey, true)
+r = r.WithContext(ctx)
+...
+// Retrieve the value from the request context using our constant as the key.
+isAuthenticated, ok := r.Context().Value(isAuthenticatedContextKey).(bool) if !ok {
+return errors.New("could not convert value to bool") }
+```
+
