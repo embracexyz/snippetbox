@@ -17,7 +17,8 @@ type templateData struct {
 	// add a form 存储提交表单的数据和error校验信息
 	Form interface{}
 	// add Flash
-	Flash string
+	Flash           string
+	IsAuthenticated bool
 }
 
 type Form struct {
@@ -29,8 +30,9 @@ type Form struct {
 
 func (app *application) NewTemplateData(r *http.Request) *templateData {
 	return &templateData{
-		CurrentYear: time.Now().Year(),
-		Flash:       app.sessionManager.PopString(r.Context(), "flash"), // 自动尝试从当前context中取flash信息
+		CurrentYear:     time.Now().Year(),
+		Flash:           app.sessionManager.PopString(r.Context(), "flash"), // 自动尝试从当前context中取flash信息
+		IsAuthenticated: app.isAuthenticated(),
 	}
 }
 
