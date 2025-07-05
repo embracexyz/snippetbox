@@ -58,6 +58,15 @@ func PermmittedInt(value int, permittedValues ...int) bool {
 	return false
 }
 
+func PermmittedValue[T comparable](value T, premittedValues ...T) bool {
+	for i := range premittedValues {
+		if value == premittedValues[i] {
+			return true
+		}
+	}
+	return false
+}
+
 func MinChars(chars string, n int) bool {
 	return utf8.RuneCountInString(chars) >= n
 }
