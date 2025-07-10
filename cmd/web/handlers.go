@@ -12,6 +12,10 @@ import (
 	"github.com/embracexyz/snippetbox/internal/validator"
 )
 
+func ping(w http.ResponseWriter, r *http.Request) {
+	w.Write([]byte("OK"))
+}
+
 func (app *application) download(w http.ResponseWriter, r *http.Request) {
 	http.ServeFile(w, r, "./ui/static/file.txt")
 }

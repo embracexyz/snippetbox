@@ -49,6 +49,9 @@ func (app *application) getRoutes() http.Handler {
 	router.Handler(http.MethodGet, "/user/login", dynamic.ThenFunc(app.userLogin))
 	router.Handler(http.MethodPost, "/user/login", dynamic.ThenFunc(app.userLoginPost))
 
+	// ping
+	router.Handler(http.MethodGet, "/ping", http.HandlerFunc(ping))
+
 	protected := dynamic.Append(app.requireAuth)
 	// add requireAuth middler before this url
 	router.Handler(http.MethodGet, "/snippet/create", protected.ThenFunc(app.snippetCreate))
