@@ -5,6 +5,7 @@ import (
 	"errors"
 	"time"
 
+	"github.com/embracexyz/snippetbox/internal/validator"
 	"github.com/go-sql-driver/mysql"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -14,6 +15,7 @@ type UserModelInterface interface {
 	Authenticate(email, password string) (int, error)
 	Exists(id int) (bool, error)
 	GetUser(id int) (*User, error)
+	ChangePassword(id int, currentPassword, newPassword string) error
 }
 type User struct {
 	ID             int
@@ -23,8 +25,38 @@ type User struct {
 	Created        time.Time
 }
 
+type UserChangePasswordForm struct {
+	CurrentPassword         string `form:"currentPassword"`
+	NewPassword             string `form:"newPassword"`
+	NewPasswordConfirmation string `form:"newPasswordConfirmation"`
+	validator.Validator     `form:"-"`
+}
+
 type UserModel struct {
 	DB *sql.DB
+}
+
+func (m *UserModel) ChangePassword(id int, currentPassword, newPassword string) error {
+
+	// 1. currentPassword是否正确
+	stmt := `SELECT hashed_password FROM users WHERE id = ?`
+	var hashedPassword []byte
+	err := m.DB.QueryRow(stmt, id).Scan(&hashedPassword)
+	if err != nil {
+		return err
+	}
+	if err = bcrypt.CompareHashAndPassword(hashedPassword, []byte(currentPassword)); err != nil {
+		return ErrInvalidCredentials
+	}
+
+	// 2. 更新，
+	stmt = `UPDATE users SET hashed_password = ? WHERE id = ?`
+	hashedNewPassword, err := bcrypt.GenerateFromPassword([]byte(newPassword), 12)
+	if err != nil {
+		return err
+	}
+	_, err = m.DB.Exec(stmt, string(hashedNewPassword), id)
+	return err
 }
 
 func (m *UserModel) GetUser(id int) (*User, error) {

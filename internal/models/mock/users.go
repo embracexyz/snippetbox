@@ -9,7 +9,17 @@ import (
 type MockUserModel struct {
 }
 
-func (m *MockSnippetModel) GetUser(id int) (*models.User, error) {
+func (m *MockUserModel) ChangePassword(id int, currentPassword, newPassword string) error {
+	if id == 1 {
+		if currentPassword == "pa$$word" {
+			return nil
+		}
+		return models.ErrInvalidCredentials
+	}
+	return models.ErrNoRecord
+}
+
+func (m *MockUserModel) GetUser(id int) (*models.User, error) {
 	switch id {
 	case 1:
 		return &models.User{

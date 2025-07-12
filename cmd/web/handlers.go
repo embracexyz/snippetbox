@@ -265,3 +265,51 @@ func (app *application) userProfile(w http.ResponseWriter, r *http.Request) {
 	app.render(w, http.StatusOK, "profile.tmpl", data)
 
 }
+
+func (app *application) userPasswordUpdate(w http.ResponseWriter, r *http.Request) {
+	data := app.NewTemplateData(r)
+	data.Form = models.UserChangePasswordForm{}
+	app.render(w, http.StatusOK, "change_password.tmpl", data)
+}
+
+func (app *application) userPasswordUpdatePost(w http.ResponseWriter, r *http.Request) {
+	// 1. decode验证
+	var form models.UserChangePasswordForm
+	err := app.decoderForm(r, &form)
+	if err != nil {
+		app.clientError(w, http.StatusBadRequest)
+		return
+	}
+
+	// 2. 通过后表单数据验证
+	form.CheckField(validator.NotBlank(form.CurrentPassword), "currentPassword", "This field cannot be blank")
+	form.CheckField(validator.NotBlank(form.NewPassword), "newPassword", "This field cannot be blank")
+	form.CheckField(validator.MinChars(form.NewPassword, 8), "newPassword", "This field must be at least 8 characters long")
+	form.CheckField(validator.NotBlank(form.NewPasswordConfirmation), "newPasswordConfirmation", "This field cannot be blank")
+	form.CheckField(form.NewPassword == form.NewPasswordConfirmation, "newPasswordConfirmation", "Passwords do not match")
+	if !form.Valid() {
+		data := app.NewTemplateData(r)
+		data.Form = form
+		app.render(w, http.StatusUnprocessableEntity, "change_password.tmpl", data)
+		return
+	}
+
+	// 3. 通过后changePassword
+	id := app.sessionManager.GetInt(r.Context(), "authenticatedUserID")
+	err = app.users.ChangePassword(id, form.CurrentPassword, form.NewPassword)
+	if err != nil {
+		if errors.Is(err, models.ErrInvalidCredentials) {
+			form.AddFildError("currentPassword", "Current password is incorrect")
+			data := app.NewTemplateData(r)
+			data.Form = form
+			app.render(w, http.StatusUnprocessableEntity, "change_password.tmpl", data)
+		} else {
+			app.serverError(w, err)
+		}
+		return
+	}
+
+	// 4. 成功修改后，提示一个flash，redirect到account profile page
+	app.sessionManager.Put(r.Context(), "flash", "Your password has been updated!")
+	http.Redirect(w, r, "/profile", http.StatusSeeOther)
+}

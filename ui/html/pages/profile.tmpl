@@ -2,7 +2,9 @@
 
 {{define "main"}}
 
-<p>{{.User.Name}}</p>
-<p>{{.User.Email}}</p>
-<p>{{.User.Created}}</p>
+<p>Name: {{.User.Name}}</p>
+<p>Email: {{.User.Email}}</p>
+<p>Created: {{.User.Created}}</p>
+<p>Password: <a href='/account/password/update'>Change password</a> </p>
+
 {{end}}
