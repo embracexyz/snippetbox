@@ -230,6 +230,11 @@ func (app *application) userLoginPost(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	app.sessionManager.Put(r.Context(), "authenticatedUserID", id)
+	urlBefore := app.sessionManager.PopString(r.Context(), "redirectPathAfterLogin")
+	if urlBefore != "" {
+		http.Redirect(w, r, urlBefore, http.StatusSeeOther)
+		return
+	}
 	http.Redirect(w, r, "/snippet/create", http.StatusSeeOther)
 }
 
