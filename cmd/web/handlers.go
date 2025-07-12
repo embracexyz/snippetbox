@@ -12,6 +12,12 @@ import (
 	"github.com/embracexyz/snippetbox/internal/validator"
 )
 
+func (app *application) about(w http.ResponseWriter, r *http.Request) {
+	data := app.NewTemplateData(r)
+	data.About = "this is a about"
+	app.render(w, http.StatusOK, "about.tmpl", data)
+}
+
 func ping(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("OK"))
 }

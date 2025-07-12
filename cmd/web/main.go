@@ -25,6 +25,7 @@ type config struct {
 // 依赖注入;通过把handlerFunc变成application的方法，从而使得各类业务函数能access到application的属性，即infoLog，实现依赖注入
 // 但！仅限于同package，如果是handler分布在不同packege，只能通过closure方式实现，外部package的handlerFunc接受applaction并返回一个http.HandlerFunc类型，通过closure访问appliciton
 type application struct {
+	debug          bool
 	infoLog        *log.Logger
 	errLog         *log.Logger
 	snippets       models.SnippetModelInterface
@@ -50,6 +51,8 @@ func main() {
 	var config config
 	flag.StringVar(&config.addr, "addr", ":4000", "addr of server")
 	flag.StringVar(&config.dsn, "dsn", "web:yourpassword@(127.0.0.1:13306)/snippetbox?parseTime=true", "mysql datasource name")
+	debug := flag.Bool("debug", false, "Enable debug mode")
+
 	flag.Parse()
 
 	// leveled logging
@@ -80,6 +83,7 @@ func main() {
 	// init application
 
 	app := application{
+		debug:          *debug,
 		infoLog:        infoLog,
 		errLog:         errLog,
 		snippets:       &models.SnippetModel{DB: db},

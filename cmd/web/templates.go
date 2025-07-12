@@ -23,6 +23,7 @@ type templateData struct {
 	Flash           string
 	IsAuthenticated bool
 	CSRFToken       string
+	About           string
 }
 
 type Form struct {

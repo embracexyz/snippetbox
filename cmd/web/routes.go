@@ -41,7 +41,8 @@ func (app *application) getRoutes() http.Handler {
 	*/
 	dynamic := alice.New(app.sessionManager.LoadAndSave, noSurf, app.authenticate)
 
-	router.Handler(http.MethodGet, "/", dynamic.ThenFunc(app.home)) // excatly match "/"
+	router.Handler(http.MethodGet, "/", dynamic.ThenFunc(app.home))       // excatly match "/"
+	router.Handler(http.MethodGet, "/about", dynamic.ThenFunc(app.about)) // excatly match "/"
 	router.Handler(http.MethodGet, "/snippet/view/:id", dynamic.ThenFunc(app.snippetView))
 	// user
 	router.Handler(http.MethodGet, "/user/signup", dynamic.ThenFunc(app.userSignUp))
