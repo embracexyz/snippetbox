@@ -1,8 +1,26 @@
 package mock
 
-import "github.com/embracexyz/snippetbox/internal/models"
+import (
+	"time"
+
+	"github.com/embracexyz/snippetbox/internal/models"
+)
 
 type MockUserModel struct {
+}
+
+func (m *MockSnippetModel) GetUser(id int) (*models.User, error) {
+	switch id {
+	case 1:
+		return &models.User{
+			ID:      1,
+			Name:    "Alice",
+			Email:   "alice@example.com",
+			Created: time.Now(),
+		}, nil
+	default:
+		return nil, models.ErrNoRecord
+	}
 }
 
 func (m *MockUserModel) Insert(name, email, password string) error {

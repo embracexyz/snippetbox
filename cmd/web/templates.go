@@ -24,6 +24,7 @@ type templateData struct {
 	IsAuthenticated bool
 	CSRFToken       string
 	About           string
+	User            *models.User
 }
 
 type Form struct {
